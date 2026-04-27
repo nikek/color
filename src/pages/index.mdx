@@ -1,0 +1,103 @@
+---
+layout: ../components/layout/ArticleLayout.astro
+title: "Beyond sRGB — Understanding Wide Gamut Color"
+---
+
+import CieDiagram from '../components/viz/CieDiagram.svelte';
+import SrgbColorPicker from '../components/viz/SrgbColorPicker.svelte';
+import RgbCube from '../components/viz/RgbCube.svelte';
+import HslCylinder from '../components/viz/HslCylinder.svelte';
+import GamutComparison from '../components/viz/GamutComparison.svelte';
+import OklchSpace from '../components/viz/OklchSpace.svelte';
+import UniformityDemo from '../components/viz/UniformityDemo.svelte';
+import ContrastChecker from '../components/viz/ContrastChecker.svelte';
+
+# Beyond sRGB
+
+<p class="text-xl text-text-secondary leading-relaxed mb-12">
+  An interactive exploration of color spaces — from the limits of sRGB to the perceptual uniformity of OKLCH and the expanded gamut of Display P3.
+</p>
+
+## The Colors We See
+
+In 1931, the Commission Internationale de l'Éclairage (CIE) ran experiments to map the full range of colors visible to the human eye. The result was the CIE 1931 chromaticity diagram — a horseshoe-shaped plot where every point represents a visible color.
+
+The outline traces the **spectral locus** — pure single-wavelength light from violet (380nm) through red (700nm). Everything inside the outline is a color that can be produced by mixing wavelengths. Everything outside is physically impossible for a human to perceive.
+
+<CieDiagram client:visible />
+
+The triangles overlaid on the diagram represent **color gamuts** — the subset of visible colors that a particular technology can reproduce. Notice how much of the horseshoe lies outside both triangles. No current display technology can reproduce all the colors we can see.
+
+## sRGB and Hex Codes
+
+In 1996, HP and Microsoft standardized **sRGB** (standard Red Green Blue) as the default color space for the web, monitors, and digital cameras. Every color is defined by three channels — red, green, and blue — each ranging from 0 to 255.
+
+A hex code like `#4285F4` is just a compact way to write three 8-bit values: `42` = 66 red, `85` = 133 green, `F4` = 244 blue.
+
+<SrgbColorPicker client:load />
+
+This system served us well for decades. But 8 bits per channel means only **16.7 million colors** — and they all live inside that small triangle on the CIE diagram.
+
+## The RGB Cube
+
+If you plot red, green, and blue as three axes in 3D space, every sRGB color maps to a point inside a cube. Black sits at the origin (0, 0, 0), white at the far corner (255, 255, 255), and the primary and secondary colors occupy the other six corners.
+
+<RgbCube client:only="svelte" />
+
+This is intuitive for computers, but not for humans. If someone asks you to make a color "a bit warmer", you'd need to adjust all three channels simultaneously. There's no single axis for "warmth" or "brightness" in RGB.
+
+## The HSL Cylinder
+
+**HSL** (Hue, Saturation, Lightness) rearranges the same sRGB colors into a more human-friendly shape. Hue becomes an angle around a cylinder (0°=red, 120°=green, 240°=blue), saturation becomes the distance from the center, and lightness runs from bottom (black) to top (white).
+
+<HslCylinder client:only="svelte" />
+
+This feels more natural. Want a different shade? Rotate the hue. Want it more vivid? Increase saturation. Want it lighter? Slide lightness up. But HSL has a problem — a big one.
+
+## The Limits of sRGB
+
+sRGB has two fundamental limitations:
+
+**Limited gamut.** Modern displays — especially Apple's Retina screens, many OLED panels, and professional monitors — support **Display P3**, a color space roughly 25% larger than sRGB. Colors outside the sRGB triangle simply cannot be represented in hex codes or `rgb()`.
+
+<GamutComparison client:visible />
+
+**Perceptual non-uniformity.** HSL's "lightness" is a mathematical convenience, not a perceptual reality. `hsl(60, 100%, 50%)` (yellow) and `hsl(240, 100%, 50%)` (blue) both claim 50% lightness — but yellow looks dramatically brighter than blue to the human eye.
+
+## OKLCH — A Perceptually Uniform Color Space
+
+**OKLCH** stands for Oklab Lightness, Chroma, Hue. It was designed by Björn Ottosson in 2020 to solve the problems above. Like HSL, it uses a cylindrical model — but its axes are calibrated to match how humans actually perceive color:
+
+- **L** (lightness): 0 = black, 1 = white. Equal steps in L produce equal perceived brightness changes.
+- **C** (chroma): 0 = gray, higher = more vivid. Similar to saturation but perceptually calibrated.
+- **H** (hue): 0–360°, same concept as HSL but evenly spaced perceptually.
+
+<OklchSpace client:only="svelte" />
+
+Notice how the sRGB gamut in OKLCH space is an irregular blob — not a neat cylinder. That asymmetry reflects the truth: some hues (like green) can reach higher chroma than others (like blue) before hitting the edge of what sRGB can display.
+
+## Perceptual Uniformity in Practice
+
+Here's the key difference. Both rows sweep through all hues. The top row uses HSL with fixed saturation and lightness. The bottom uses OKLCH with fixed lightness and chroma.
+
+<UniformityDemo client:visible />
+
+The numbers below each swatch show the relative luminance. In the HSL row, luminance swings wildly — yellow is far brighter than blue despite both being "50% lightness". In the OKLCH row, luminance is consistent across all hues.
+
+This matters for design systems. If you're building a set of status colors (success, warning, error, info), OKLCH lets you guarantee they all have the same visual weight against your background.
+
+## Choosing Colors with Consistent Contrast
+
+This is the practical payoff. With OKLCH, you can **hold lightness constant** while freely changing hue and chroma — and the contrast ratio against any background stays nearly the same.
+
+Try it below. Adjust the hue and chroma of the background, then notice how the contrast ratio barely moves. In HSL, the same experiment would cause contrast to swing by several points.
+
+<ContrastChecker client:visible />
+
+This means you can build entire color palettes where every shade at a given lightness level has the same accessibility properties. No more checking each color individually — the math guarantees it.
+
+---
+
+<p class="text-sm text-text-secondary mt-16">
+  Built with Astro, Svelte, Three.js, and OKLCH. Colors on this page are defined using <code class="text-text-primary">oklch()</code> — the very color space the article describes.
+</p>

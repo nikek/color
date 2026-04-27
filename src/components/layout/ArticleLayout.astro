@@ -1,0 +1,23 @@
+---
+const { frontmatter } = Astro.props;
+const title = frontmatter?.title ?? 'Beyond sRGB';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/color/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An interactive guide to color spaces — from sRGB to Display P3, through the lens of OKLCH and perceptual uniformity." />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-surface text-text-primary">
+    <article class="mx-auto max-w-[680px] px-6 py-16 md:py-24">
+      <slot />
+    </article>
+  </body>
+</html>
+
+<style is:global>
+  @import "../../styles/global.css";
+</style>
