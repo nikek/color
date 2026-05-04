@@ -4,6 +4,7 @@ import { xyzToSrgbLinear, xyzToP3Linear, linearToSrgb } from "./color";
 export interface DiagramOptions {
   showSrgb: boolean;
   showP3: boolean;
+  showWavelengths: boolean;
   isP3Display: boolean;
 }
 
@@ -179,7 +180,7 @@ export function renderCieDiagram(
   options: DiagramOptions,
 ): void {
   const { width: w, height: h } = canvas;
-  const { showSrgb, showP3, isP3Display } = options;
+  const { showSrgb, showP3, showWavelengths, isP3Display } = options;
 
   const ctxOptions: CanvasRenderingContext2DSettings = isP3Display
     ? { colorSpace: "display-p3" }
@@ -266,7 +267,18 @@ export function renderCieDiagram(
     );
   }
 
-  drawAxes(ctx, w, h);
+  if (showWavelengths) {
+    drawWavelengthLabels(ctx, w, h);
+  } else {
+    drawAxes(ctx, w, h);
+  }
+}
+
+function spectralColor(x: number, y: number): string {
+  const [X, Y, Z] = xyToXYZ(x, y);
+  const [lr, lg, lb] = xyzToSrgbLinear(X, Y, Z);
+  const [r, g, b] = encodeGamma(lr, lg, lb);
+  return `rgb(${r},${g},${b})`;
 }
 
 function drawSpectralLocus(
@@ -274,16 +286,29 @@ function drawSpectralLocus(
   w: number,
   h: number,
 ) {
+  ctx.lineWidth = 2;
+
+  for (let i = 1; i < SPECTRAL_LOCUS.length; i++) {
+    const [, x0, y0] = SPECTRAL_LOCUS[i - 1];
+    const [, x1, y1] = SPECTRAL_LOCUS[i];
+    const [cx0, cy0] = xyToCanvas(x0, y0, w, h);
+    const [cx1, cy1] = xyToCanvas(x1, y1, w, h);
+
+    ctx.beginPath();
+    ctx.moveTo(cx0, cy0);
+    ctx.lineTo(cx1, cy1);
+    ctx.strokeStyle = spectralColor(x1, y1);
+    ctx.stroke();
+  }
+
+  const last = SPECTRAL_LOCUS[SPECTRAL_LOCUS.length - 1];
+  const first = SPECTRAL_LOCUS[0];
+  const [lx, ly] = xyToCanvas(last[1], last[2], w, h);
+  const [fx, fy] = xyToCanvas(first[1], first[2], w, h);
   ctx.beginPath();
-  SPECTRAL_LOCUS.forEach(([, x, y], i) => {
-    const [cx, cy] = xyToCanvas(x, y, w, h);
-    if (i === 0) ctx.moveTo(cx, cy);
-    else ctx.lineTo(cx, cy);
-  });
-  const [fx, fy] = xyToCanvas(SPECTRAL_LOCUS[0][1], SPECTRAL_LOCUS[0][2], w, h);
+  ctx.moveTo(lx, ly);
   ctx.lineTo(fx, fy);
   ctx.strokeStyle = "rgba(255,255,255,0.3)";
-  ctx.lineWidth = 1;
   ctx.stroke();
 }
 
@@ -327,6 +352,53 @@ function drawGamutTriangle(
   ctx.strokeStyle = color;
   ctx.lineWidth = 1.5;
   ctx.stroke();
+}
+
+const WAVELENGTH_LABELS = [
+  460, 470, 480, 490, 500, 510, 520, 530, 540, 560, 580, 600, 620, 700,
+];
+
+const locusCenter: [number, number] = [
+  SPECTRAL_LOCUS.reduce((s, [, x]) => s + x, 0) / SPECTRAL_LOCUS.length,
+  SPECTRAL_LOCUS.reduce((s, [, , y]) => s + y, 0) / SPECTRAL_LOCUS.length,
+];
+
+function drawWavelengthLabels(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) {
+  ctx.font = "10px system-ui";
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+
+  for (const nm of WAVELENGTH_LABELS) {
+    const entry = SPECTRAL_LOCUS.find(([wl]) => wl === nm);
+    if (!entry) continue;
+
+    const [, x, y] = entry;
+    const [cx, cy] = xyToCanvas(x, y, w, h);
+
+    const dx = x - locusCenter[0];
+    const dy = y - locusCenter[1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const nx = dx / len;
+    const ny = dy / len;
+
+    const offset = 14;
+    const lx = cx + nx * offset;
+    const ly = cy - ny * offset;
+
+    ctx.textAlign = nx > 0.3 ? "left" : nx < -0.3 ? "right" : "center";
+    ctx.textBaseline = ny > 0.3 ? "bottom" : ny < -0.3 ? "top" : "middle";
+    ctx.fillText(`${nm}`, lx, ly);
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + nx * 5, cy - ny * 5);
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
 }
 
 function drawAxes(ctx: CanvasRenderingContext2D, w: number, h: number) {

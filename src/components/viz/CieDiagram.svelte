@@ -5,6 +5,7 @@
   let container: HTMLDivElement;
   let showSrgb = $state(true);
   let showP3 = $state(true);
+  let showWavelengths = $state(false);
   let isP3Display = $state(false);
   let mounted = $state(false);
 
@@ -26,7 +27,7 @@
     canvas.height = 500;
     canvas.className = 'max-w-full rounded';
     container.replaceChildren(canvas);
-    renderCieDiagram(canvas, { showSrgb, showP3, isP3Display });
+    renderCieDiagram(canvas, { showSrgb, showP3, showWavelengths, isP3Display });
   });
 </script>
 
@@ -43,6 +44,10 @@
     <label class="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
       <input type="checkbox" bind:checked={showP3} class="accent-teal-400" />
       Display P3
+    </label>
+    <label class="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+      <input type="checkbox" bind:checked={showWavelengths} />
+      Wavelengths
     </label>
   </div>
 
