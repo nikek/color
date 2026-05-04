@@ -6,7 +6,7 @@ title: "Beyond sRGB — Understanding Wide Gamut Color"
 import CieDiagram from '../components/viz/CieDiagram.svelte';
 import SrgbColorPicker from '../components/viz/SrgbColorPicker.svelte';
 import RgbCube from '../components/viz/RgbCube.svelte';
-import HslCylinder from '../components/viz/HslCylinder.svelte';
+import HsbCylinder from '../components/viz/HsbCylinder.svelte';
 import GamutComparison from '../components/viz/GamutComparison.svelte';
 import OklchSpace from '../components/viz/OklchSpace.svelte';
 import UniformityDemo from '../components/viz/UniformityDemo.svelte';
@@ -46,13 +46,13 @@ If you plot red, green, and blue as three axes in 3D space, every sRGB color map
 
 This is intuitive for computers, but not for humans. If someone asks you to make a color "a bit warmer", you'd need to adjust all three channels simultaneously. There's no single axis for "warmth" or "brightness" in RGB.
 
-## The HSL Cylinder
+## The HSB Cylinder
 
-**HSL** (Hue, Saturation, Lightness) rearranges the same sRGB colors into a more human-friendly shape. Hue becomes an angle around a cylinder (0°=red, 120°=green, 240°=blue), saturation becomes the distance from the center, and lightness runs from bottom (black) to top (white).
+**HSB** (Hue, Saturation, Brightness) rearranges the same sRGB colors into a more human-friendly shape. Hue becomes an angle around a cylinder (0°=red, 120°=green, 240°=blue), saturation becomes the distance from the center, and brightness runs from bottom (black) to top (fully vivid).
 
-<HslCylinder client:only="svelte" />
+<HsbCylinder client:only="svelte" />
 
-This feels more natural. Want a different shade? Rotate the hue. Want it more vivid? Increase saturation. Want it lighter? Slide lightness up. But HSL has a problem — a big one.
+This feels more natural. Want a different shade? Rotate the hue. Want it more vivid? Increase saturation. Want it brighter? Slide brightness up. But HSB has a problem — a big one.
 
 ## The Limits of sRGB
 

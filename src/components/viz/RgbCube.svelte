@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
+  import * as THREE from 'three';
   import RgbCubeScene from './RgbCubeScene.svelte';
 </script>
 
 <div class="rounded-xl bg-surface-raised border border-border p-6">
   <div class="aspect-square max-w-md mx-auto">
-    <Canvas>
+    <Canvas toneMapping={THREE.NoToneMapping}>
       <RgbCubeScene />
     </Canvas>
   </div>

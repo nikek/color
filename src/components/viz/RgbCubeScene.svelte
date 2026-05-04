@@ -5,6 +5,10 @@
 
   const SEGMENTS = 32;
 
+  function srgbToLinear(c: number): number {
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+
   function createRgbCubeGeometry(): THREE.BufferGeometry {
     const geometry = new THREE.BoxGeometry(1, 1, 1, SEGMENTS, SEGMENTS, SEGMENTS);
     const positions = geometry.attributes.position;
@@ -14,9 +18,9 @@
       const x = positions.getX(i) + 0.5;
       const y = positions.getY(i) + 0.5;
       const z = positions.getZ(i) + 0.5;
-      colors[i * 3] = x;
-      colors[i * 3 + 1] = y;
-      colors[i * 3 + 2] = z;
+      colors[i * 3] = srgbToLinear(x);
+      colors[i * 3 + 1] = srgbToLinear(y);
+      colors[i * 3 + 2] = srgbToLinear(z);
     }
 
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
